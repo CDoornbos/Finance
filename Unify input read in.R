@@ -65,7 +65,7 @@ ReadABNA <- function(filename){
            "Omschrijving" = gsub(";", "", Omschrijving),
            "Bedrag" = as.numeric(sub(",", ".", Bedrag)),
            "Datum" = ymd(Datum),
-           "Rekening" = as.character(Rekening),
+           "Rekening" = as.character("NL80ABNA0625680936"),
            "Tag" = "") %>%
     select(Datum, Naam, Rekening, Tegenrekening, Bedrag, Omschrijving, Type, Tag)
 }
