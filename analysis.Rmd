@@ -1,0 +1,36 @@
+---
+title: "Finance"
+author: "Cenna Doornbos"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Finances `r lubridate::year(Sys.Date())` - `r lubridate::year(Sys.Date())`
+
+##
+```{r dependencies}
+library(renv)
+library(readr)
+library(tidyverse)
+library(lubridate)
+library(magrittr)
+
+source("unify input read in.R")
+source("functions.R")
+```
+
+``` {r input}
+# Read in files
+bt <- rbind(suppressMessages(ReadBT("Input/Banktrans_tm_02022020.csv")) %>% mutate("Bron" = "BT"),
+            ReadING("Input/NL39INGB0006347095_01-02-2020_03-04-2022.csv") %>% mutate("Bron" = "Cenna"),
+            ReadING("Input/NL22INGB0798255498_23-02-2020_03-04-2022.csv") %>% mutate("Bron" = "Gezamenlijk"),
+            ReadABNA("Input/220404213522_04112020_04042022.TAB") %>% mutate("Bron" = "Thijs"))
+```
+
+# TODO: categorize data
+
+
