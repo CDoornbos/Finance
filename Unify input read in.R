@@ -41,41 +41,32 @@ ReadING <- function(filename){
 
 ### Read in ABNA TAB###
 ReadABNA <- function(filename){
-  df <- read.delim("Input/220404213522_04112020_04042022.TAB", header = FALSE, skipNul = TRUE)
-  colnames(df) <- c("Rekening", "NA1", "Datum", "NA2", "NA3", "NA4", "Bedrag", "X")
+  df <- read.delim(filename, header = FALSE, skipNul = TRUE)
+  colnames(df) <- c("Rekening", "NA1", "Datum", "NA2", "NA3", "NA4", "Bedrag", "Omschrijving")
   df %<>%
     select(-contains("NA")) %>%
-    mutate("X" = gsub(",*( *)$", "", X),
-           "X" = gsub("  +", "; ", X),
-           "Tegenrekening" = ifelse(grepl("IBAN", X), gsub(".*IBAN: (.{18}).*", "\\1", X), ""),
-           "Tegenrekening" = ifelse(grepl("/TRTP/", X), gsub(".*/IBAN/(.{18}).*", "\\1", X), Tegenrekening),
-           "X" = str_remove(X, "IBAN: .*; |IBAN: .*"),
-           "X" = str_remove(X, "BIC: .*; "),
-           "Naam" = ifelse(grepl("Naam", X), gsub(".*Naam: (.*); .*", "\\1", X), ""),
-           "Naam" = ifelse(grepl(";", Naam), sub("; .*", "", Naam), Naam),
-           "Naam" = ifelse(grepl("BasisPakket", X), "Kosten BasisPakket", Naam),
-           "X" = ifelse(grepl("BasisPakket", X), "ABN AMRO Bank N.V.", X),
-           "Naam" = ifelse(grepl("ring 625680936", X), "Maandpremie verzekering 625680936", Naam),
-           "Naam" = ifelse(grepl("/TRTP/", X), gsub(".*/NAME/(.*)/.*", "\\1", X), Naam),
-           "Naam" = ifelse(grepl("/EREF", Naam), gsub("/EREF.*", "", Naam), Naam),
-           "Naam" = ifelse(grepl("/REMI", Naam), gsub("/REMI.*", "", Naam), Naam),
-           "Naam" = ifelse(grepl("/MARF", Naam), gsub("/MARF.*", "", Naam), Naam),
-           "X" = str_remove(X, paste0("; Naam: ",Naam)),
-           "Type" = as.factor(case_when(grepl("ABN AMRO Bank", X) ~ "Diversen",
-                                        grepl("ncasso", X) ~ "Incasso",
-                                        grepl("aandpremie", X) ~ "Incasso",
-                                        grepl("iDEAL", X) ~ "iDEAL",
-                                        grepl("verboeking|OVERBOEKING", X) ~ "Overschrijving",
-                                        grepl("eriodieke overb", X) ~ "Online bankieren",
-                                        grepl("BEA", X) ~ "Betaalautomaat",
+    mutate("Omschrijving" = gsub("  +", "; ", Omschrijving),
+           "Tegenrekening" = case_when(grepl("/TRTP/", Omschrijving) ~ gsub(".*/IBAN/(.{18}).*", "\\1", Omschrijving),
+                                       grepl("IBAN", Omschrijving) ~ gsub(".*IBAN: (.{18}).*", "\\1", Omschrijving),
+                                       .default = ""),
+           "Type" = as.factor(case_when(grepl("ABN AMRO Bank", Omschrijving) ~ "Diversen",
+                                        grepl("ncasso|aandpremie", Omschrijving) ~ "Incasso",
+                                        grepl("iDEAL", Omschrijving) ~ "iDEAL",
+                                        grepl("verboeking|OVERBOEKING", Omschrijving) ~ "Overschrijving",
+                                        grepl("eriodieke overb", Omschrijving) ~ "Online bankieren",
+                                        grepl("BEA", Omschrijving) ~ "Betaalautomaat",
                                         .default = "")),
-           "X" = gsub("BEA; ", "", X),
-           "Naam" = ifelse(Type == "Betaalautomaat", gsub(".*/.{5} (.*),.*", "\\1", X), Naam),
-           "Naam" = ifelse(grepl("SEPA", X) & Naam == "", gsub("(SEPA .*);.*", "\\1", X), Naam),
+           "Naam" = case_when(grepl("Naam", Omschrijving) ~ gsub(".*Naam: (.*)(;.*?).*", "\\1", Omschrijving),
+                              grepl("BasisPakket", Omschrijving) ~ "Kosten BasisPakket",
+                              grepl("ring 625680936", Omschrijving) ~ "Maandpremie verzekering 625680936",
+                              grepl("/TRTP/", Omschrijving) ~ gsub(".*/NAME/(.*)(/.*?).*", "\\1", Omschrijving),
+                              grepl("BEA", Omschrijving) ~ gsub(".*/.{5} (.*),.*", "\\1", Omschrijving),
+                              .default = "" ),
+           "Omschrijving" = gsub(";", "", Omschrijving),
            "Bedrag" = as.numeric(sub(",", ".", Bedrag)),
            "Datum" = ymd(Datum),
            "Rekening" = as.character(Rekening),
            "Tag" = "") %>%
-    rename("Omschrijving" = X) %>%
     select(Datum, Naam, Rekening, Tegenrekening, Bedrag, Omschrijving, Type, Tag)
 }
+
